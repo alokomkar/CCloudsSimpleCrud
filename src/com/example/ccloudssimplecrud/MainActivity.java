@@ -16,30 +16,24 @@ public class MainActivity extends Activity {
 
 	ListView mListView;
 	CustomCursorAdapter mCustomCursorAdapter;
+	DatabaseHandler mDatabaseHandler;
 	
+	Cursor mCursor;
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
 		setContentView(R.layout.activity_main);
 		
 		mListView = (ListView) findViewById(R.id.customListView);
-		DatabaseHandler databaseHandler = new DatabaseHandler(this);
-		/*databaseHandler.addDBTable(new DBTable(1, 1, 1, 1));
-		databaseHandler.addDBTable(new DBTable(2, 1, 1, 1));
-		databaseHandler.addDBTable(new DBTable(3, 1, 1, 1));
-		databaseHandler.addDBTable(new DBTable(4, 1, 1, 1));
-		databaseHandler.addDBTable(new DBTable(5, 1, 1, 1));*/
-		Cursor cursor = databaseHandler.getAllDBTableCursor();
+		mDatabaseHandler = new DatabaseHandler(this);
+		/*mDatabaseHandler.addDBTable(new DBTable(1, 1, 1, 1));
+		mDatabaseHandler.addDBTable(new DBTable(2, 2, 2, 2));
+		mDatabaseHandler.addDBTable(new DBTable(3, 3, 3, 3));
+		mDatabaseHandler.addDBTable(new DBTable(4, 4, 4, 4));
+		mDatabaseHandler.addDBTable(new DBTable(5, 5, 5, 5));*/
+	    mCursor = mDatabaseHandler.getAllDBTableCursor();
 		
-		/**
-		 * TODO Need to check what flag needs to be set : 
-		 * FLAG_AUTO_REQUERY - deprecated
-		 * FLAG_REGISTER_CONTENT_OBSERVER - Check it
-		 * http://developer.android.com/reference/android/widget/CursorAdapter.html#FLAG_AUTO_REQUERY
-		 */
-		
-		mCustomCursorAdapter = new CustomCursorAdapter(this, cursor, CursorAdapter.FLAG_REGISTER_CONTENT_OBSERVER);
-		mListView.setAdapter(mCustomCursorAdapter);
+		initializeListView();
 		
 		Button createButton = (Button) findViewById(R.id.createBtn);
 		Button updateButton = (Button) findViewById(R.id.updateBtn1);
@@ -51,6 +45,20 @@ public class MainActivity extends Activity {
 		
 	}
 	
+	private void initializeListView() {
+		
+		/**
+		 * TODO Need to check what flag needs to be set : 
+		 * FLAG_AUTO_REQUERY - deprecated
+		 * FLAG_REGISTER_CONTENT_OBSERVER - Check it
+		 * http://developer.android.com/reference/android/widget/CursorAdapter.html#FLAG_AUTO_REQUERY
+		 */
+		
+		mCustomCursorAdapter = new CustomCursorAdapter(this, mCursor, CursorAdapter.FLAG_REGISTER_CONTENT_OBSERVER, mListView);
+		mListView.setAdapter(mCustomCursorAdapter);
+		
+	}
+
 	OnClickListener mButtonClickListener = new OnClickListener() {
 		
 		@Override
@@ -58,8 +66,10 @@ public class MainActivity extends Activity {
 			
 			switch( view.getId() ) {
 			case R.id.createBtn :
+				createAction();
 				break;
 			case R.id.updateBtn1 : 
+				updateAction();
 				break;
 			case R.id.refreshBtn : 
 				refreshAction();
@@ -69,10 +79,30 @@ public class MainActivity extends Activity {
 		}
 	};
 	
-	public void refreshAction() {
-		mCustomCursorAdapter.notifyDataSetChanged();
-	}
-
+	public void createAction() {
+		
+		mCursor = mDatabaseHandler.getAllDBTableCursor();
+		String rowIndex = String.valueOf(mCursor.getCount());
+		
+		int columnCount = mCursor.getColumnCount();
+		String[] data = new String[columnCount];
+		for( int index = 0; index < columnCount; index++ ) {
+			data[index] = rowIndex;
+		}
+		mDatabaseHandler.addEntry(data );
+		refreshAction();
 	
+	}
+	
+	public void updateAction() {
+		mCustomCursorAdapter.updateAction(null);
+	}
+	
+	public void refreshAction() {
+		
+		mCursor = mDatabaseHandler.getAllDBTableCursor();
+		initializeListView();
+		
+	}
 
 }

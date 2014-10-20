@@ -18,8 +18,12 @@ public class DBTable {
 	public static String KEY_COLUMN_2 = "column_2";
 	public static String KEY_COLUMN_3 = "column_3";
 	public static String KEY_COLUMN_4 = "column_4";
+	public static String KEY_COLUMN_5 = "column_5";
 	
-	public static final int NO_OF_COLUMNS = 4;
+	public static final String[] TableColumns_Version_1 = {KEY_COLUMN_1, KEY_COLUMN_2,  KEY_COLUMN_3, KEY_COLUMN_4};
+	public static final String[] TableColumns_Version_2 = {KEY_COLUMN_1, KEY_COLUMN_2,  KEY_COLUMN_3, KEY_COLUMN_4, KEY_COLUMN_5};
+	
+	
 	
 	/**
 	 * @param mCompanyId

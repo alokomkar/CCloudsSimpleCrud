@@ -8,12 +8,14 @@ import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
 import android.database.sqlite.SQLiteException;
 import android.database.sqlite.SQLiteOpenHelper;
+import android.database.sqlite.SQLiteStatement;
 import android.util.Log;
 
 public class DatabaseHandler extends SQLiteOpenHelper {
 
+	private String TAG = getClass().getSimpleName();
 	// Database Version
-	private static final int DATABASE_VERSION = 1;
+	public static final int DATABASE_VERSION = 1;
 	// Database Name
 	private static final String DATABASE_NAME = "ccloudsDB.db";
 
@@ -23,20 +25,43 @@ public class DatabaseHandler extends SQLiteOpenHelper {
 
 	@Override
 	public void onCreate(SQLiteDatabase db) {
-		String CREATE_TABLE = "CREATE TABLE IF NOT EXISTS " + DBTable.DATABASE_TABLE_NAME + "("
-				+ DBTable.KEY_COLUMN_1 + " INTEGER PRIMARY KEY AUTOINCREMENT,"
-				+ DBTable.KEY_COLUMN_2 + " INTEGER,"
-				+ DBTable.KEY_COLUMN_3 + " INTEGER,"
-				+ DBTable.KEY_COLUMN_4 + " INTEGER"
-				+ ")";
+		String CREATE_TABLE = CreateTableByVersion();
 		db.execSQL(CREATE_TABLE);
 		//db.close();
 
+	}
+	
+	public String CreateTableByVersion() {
+		String create_table = null;
+		switch( DATABASE_VERSION ) {
+		case 1 :
+			create_table = "CREATE TABLE IF NOT EXISTS " + DBTable.DATABASE_TABLE_NAME + "("
+					+ DBTable.KEY_COLUMN_1 + " INTEGER PRIMARY KEY AUTOINCREMENT,"
+					+ DBTable.KEY_COLUMN_2 + " INTEGER,"
+					+ DBTable.KEY_COLUMN_3 + " INTEGER,"
+					+ DBTable.KEY_COLUMN_4 + " INTEGER"
+					+ ")";
+			break;
+		case 2 :
+			create_table = "CREATE TABLE IF NOT EXISTS " + DBTable.DATABASE_TABLE_NAME + "("
+					+ DBTable.KEY_COLUMN_1 + " INTEGER PRIMARY KEY AUTOINCREMENT,"
+					+ DBTable.KEY_COLUMN_2 + " INTEGER,"
+					+ DBTable.KEY_COLUMN_3 + " INTEGER,"
+					+ DBTable.KEY_COLUMN_4 + " INTEGER,"
+					+ DBTable.KEY_COLUMN_5 + " INTEGER"
+					+ ")";
+			break;
+		
+		}
+		
+		return create_table;
+		
 	}
 
 	@Override
 	public void onUpgrade(SQLiteDatabase db, int oldVersion, int newVersion) {
 		// Drop older table if existed
+		Log.d(TAG, "Upgrade from " + oldVersion + " to " + newVersion );
 		db.execSQL("DROP TABLE IF EXISTS " + DBTable.DATABASE_TABLE_NAME);
 		// Create tables again
 		onCreate(db);
@@ -45,8 +70,9 @@ public class DatabaseHandler extends SQLiteOpenHelper {
 
 	@Override
 	public void onDowngrade(final SQLiteDatabase database, int oldVersion, final int newVersion ) {
-		if( oldVersion < newVersion ) {
+		if( newVersion < oldVersion ) {
 			try { 
+				Log.d(TAG, "Downgrade from " + newVersion + " to " + oldVersion );
 				// Drop newer table if exists
 				database.execSQL("DROP TABLE IF EXISTS " + DBTable.DATABASE_TABLE_NAME);
 				//Create tables again
@@ -73,8 +99,39 @@ public class DatabaseHandler extends SQLiteOpenHelper {
 		return id;
 	}
 
+	//Addition of row without pojo
+	public int addEntry( String[] data ) {
+
+		int id = 0;
+		SQLiteDatabase database = this.getWritableDatabase();
+		String noOfElements = getNumberOfElements(data.length);
+		
+		SQLiteStatement statement = database.compileStatement("INSERT INTO "+ DBTable.DATABASE_TABLE_NAME +" VALUES ("+noOfElements+")");
+		//ContentValues values = new ContentValues();
+		database.beginTransaction();
+		statement.clearBindings();
+		for( int index = 0; index < data.length; index++ ) {
+			statement.bindString(index+1, data[index]);
+			//values.put(DBTable.TableColumns[index], data[index]);
+		}
+		statement.execute();
+		database.setTransactionSuccessful();
+		database.endTransaction();
+		//id = (int) database.insert(DBTable.DATABASE_TABLE_NAME, null, values);
+		return id;
+
+	}
+
+	private String getNumberOfElements(int length) {
+		String element = "";
+		for( int index = 0; index < length; index++ ) {
+			element += ( index == length -1 ) ? "?" : "?,";
+		}
+		return element;
+	}
+
 	//updating a existing company
-	public int editDBTable(DBTable dbTable, String position) {
+	public int editDBTable( DBTable dbTable, String position ) {
 		SQLiteDatabase db = this.getWritableDatabase();
 		ContentValues values = new ContentValues();
 		values.put(DBTable.KEY_COLUMN_1, dbTable.getmColumn1());
@@ -85,6 +142,19 @@ public class DatabaseHandler extends SQLiteOpenHelper {
 		return db.update(DBTable.DATABASE_TABLE_NAME, values, DBTable.KEY_COLUMN_1 + " = ?",
 				new String[] { String.valueOf(position) });
 	}
+
+	public int editEntry( String[] data, String position ) {
+		SQLiteDatabase database = this.getWritableDatabase();
+		ContentValues values = new ContentValues();
+		@SuppressWarnings("unused")
+		String[] columnNames = DATABASE_VERSION == 1 ? DBTable.TableColumns_Version_1 : DBTable.TableColumns_Version_2;
+		for( int index = 0; index < data.length; index++ ) {
+			values.put(columnNames[index], data[index]);
+		}
+		return database.update(DBTable.DATABASE_TABLE_NAME, values, DBTable.KEY_COLUMN_1 + " = ?",
+				new String[] { String.valueOf( position ) });
+	}
+
 
 	public DBTable getDBTable(String id) {
 		SQLiteDatabase db = this.getReadableDatabase();
@@ -101,7 +171,6 @@ public class DatabaseHandler extends SQLiteOpenHelper {
 		return company;
 
 	}
-
 
 
 	// LIst all companys
@@ -149,7 +218,7 @@ public class DatabaseHandler extends SQLiteOpenHelper {
 			return null;
 		}
 	}
-	
-	
+
+
 
 }

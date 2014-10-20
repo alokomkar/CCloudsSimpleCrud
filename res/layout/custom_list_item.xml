@@ -11,7 +11,8 @@
         android:layout_height="wrap_content"
         android:layout_alignBottom="@+id/button1"
         android:layout_alignParentLeft="true"
-        android:layout_alignParentTop="true" >
+        android:layout_alignParentTop="true"
+        android:layout_toLeftOf="@+id/button1" >
 
         <LinearLayout
             android:id="@+id/scrollViewLinearLyt"
