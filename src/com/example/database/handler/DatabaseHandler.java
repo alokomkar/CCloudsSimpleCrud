@@ -117,6 +117,7 @@ public class DatabaseHandler extends SQLiteOpenHelper {
 		statement.execute();
 		database.setTransactionSuccessful();
 		database.endTransaction();
+		database.close();
 		//id = (int) database.insert(DBTable.DATABASE_TABLE_NAME, null, values);
 		return id;
 
@@ -151,8 +152,10 @@ public class DatabaseHandler extends SQLiteOpenHelper {
 		for( int index = 0; index < data.length; index++ ) {
 			values.put(columnNames[index], data[index]);
 		}
-		return database.update(DBTable.DATABASE_TABLE_NAME, values, DBTable.KEY_COLUMN_1 + " = ?",
+		int result = database.update(DBTable.DATABASE_TABLE_NAME, values, DBTable.KEY_COLUMN_1 + " = ?",
 				new String[] { String.valueOf( position ) });
+		database.close();
+		return result;
 	}
 
 
@@ -197,6 +200,13 @@ public class DatabaseHandler extends SQLiteOpenHelper {
 			return null;
 		}
 	}
+	
+	public int deleteDBTable( String id ) {
+		int deleteResult = 0;
+		SQLiteDatabase db = this.getWritableDatabase();
+		deleteResult = db.delete(DBTable.DATABASE_TABLE_NAME, DBTable.KEY_COLUMN_1 + "=?", new String[]{id});
+		return deleteResult;
+	}
 
 	// Return Cursor pointing to DBTable
 	public Cursor getAllDBTableCursor() {
@@ -217,6 +227,20 @@ public class DatabaseHandler extends SQLiteOpenHelper {
 			Log.d("Error in getting companys from DB", e.getMessage());
 			return null;
 		}
+	}
+	
+	public int getMaxId( ) {
+		String selectQuery = "Select MAX("+DBTable.KEY_COLUMN_1+") from "+DBTable.DATABASE_TABLE_NAME;
+		SQLiteDatabase db = this.getReadableDatabase();
+		Cursor cursor = db.rawQuery(selectQuery, null);
+		if( cursor == null ) 
+			return 0;
+		if( cursor.moveToFirst() ) {
+			int id = cursor.getInt(0);
+			return id;
+		}
+		else 
+			return 0;
 	}
 
 

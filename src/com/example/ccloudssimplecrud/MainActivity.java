@@ -1,11 +1,15 @@
 package com.example.ccloudssimplecrud;
 
 import android.app.Activity;
+import android.app.AlertDialog;
+import android.content.DialogInterface;
 import android.database.Cursor;
 import android.os.Bundle;
 import android.support.v4.widget.CursorAdapter;
 import android.view.View;
 import android.view.View.OnClickListener;
+import android.widget.AdapterView;
+import android.widget.AdapterView.OnItemLongClickListener;
 import android.widget.Button;
 import android.widget.ListView;
 
@@ -25,24 +29,25 @@ public class MainActivity extends Activity {
 	public static final int KEY_UPDATE = 2;
 	public static final int KEY_INSERT = 3;
 
+
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
 		setContentView(R.layout.activity_main);
 
 		mListView = (ListView) findViewById(R.id.customListView);
+		mListView.setItemsCanFocus(true);
+		mListView.setLongClickable(true);
+		//mListView.setOnLongClickListener(mListViewLongClickListener);
+
+		mListView.setOnItemLongClickListener(mListViewItemLongClickListener);
 		mDatabaseHandler = new DatabaseHandler(this);
-		/*mDatabaseHandler.addDBTable(new DBTable(1, 1, 1, 1));
-		mDatabaseHandler.addDBTable(new DBTable(2, 2, 2, 2));
-		mDatabaseHandler.addDBTable(new DBTable(3, 3, 3, 3));
-		mDatabaseHandler.addDBTable(new DBTable(4, 4, 4, 4));
-		mDatabaseHandler.addDBTable(new DBTable(5, 5, 5, 5));*/
-		//mCursor = mDatabaseHandler.getAllDBTableCursor();
+
 		mInvokeMode = KEY_DISPLAY;
 
 		executeDBFetchTask();
 
-		
+
 
 		Button createButton = (Button) findViewById(R.id.createBtn);
 		Button updateButton = (Button) findViewById(R.id.updateBtn1);
@@ -54,8 +59,52 @@ public class MainActivity extends Activity {
 
 	}
 
+
+	OnItemLongClickListener mListViewItemLongClickListener = new OnItemLongClickListener() {
+
+		@Override
+		public boolean onItemLongClick(AdapterView<?> adapter, View view,
+				int position, long id) {
+
+			displayDeleteConfirmationDialog(String.valueOf(id));
+			return false;
+			
+		}
+	};
+
 	private void executeDBFetchTask() {
 		new DBFetchTask(this, mDatabaseHandler).execute();
+	}
+
+	protected void displayDeleteConfirmationDialog(final String id) {
+
+		AlertDialog.Builder builder = new AlertDialog.Builder(this);
+		builder.setTitle("Delete Confirmation");
+		builder.setMessage("Are you sure you want to delete Entry "+id+"?");
+		builder.setPositiveButton("YES", new DialogInterface.OnClickListener() {
+
+			public void onClick(DialogInterface dialog, int which) {
+				// Do do my action here
+				mDatabaseHandler.deleteDBTable(id);
+				mInvokeMode = KEY_DISPLAY;
+				executeDBFetchTask();
+				dialog.dismiss();
+			}
+
+		});
+
+		builder.setNegativeButton("NO", new DialogInterface.OnClickListener() {
+
+			@Override
+			public void onClick(DialogInterface dialog, int which) {
+				dialog.dismiss();
+			}
+		});
+
+		AlertDialog alert = builder.create();
+		alert.show();
+
+
 	}
 
 	private void initializeListView() {
@@ -97,7 +146,7 @@ public class MainActivity extends Activity {
 
 	public void createAction() {
 
-		String rowIndex = String.valueOf(mCursor.getCount());
+		String rowIndex = String.valueOf(mDatabaseHandler.getMaxId()+1);
 
 		int columnCount = mCursor.getColumnCount();
 		String[] data = new String[columnCount];
@@ -115,7 +164,7 @@ public class MainActivity extends Activity {
 	}
 
 	public void refreshAction() {
-		
+
 		initializeListView();
 	}
 
@@ -132,7 +181,7 @@ public class MainActivity extends Activity {
 			updateAction();
 			break;
 		}
-		
+
 	}
 
 }

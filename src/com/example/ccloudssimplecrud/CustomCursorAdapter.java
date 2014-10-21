@@ -2,11 +2,13 @@ package com.example.ccloudssimplecrud;
 
 import android.content.Context;
 import android.database.Cursor;
+import android.os.Handler;
 import android.support.v4.widget.CursorAdapter;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.View.OnClickListener;
+import android.view.View.OnFocusChangeListener;
 import android.view.ViewGroup;
 import android.widget.Button;
 import android.widget.EditText;
@@ -16,7 +18,7 @@ import android.widget.ListView;
 
 import com.example.database.handler.DatabaseHandler;
 
-public class CustomCursorAdapter extends CursorAdapter {
+public class CustomCursorAdapter extends CursorAdapter implements OnFocusChangeListener {
 
 	private LayoutInflater mInflater = null;
 	ViewHolderItem mViewHolderItem;
@@ -25,6 +27,7 @@ public class CustomCursorAdapter extends CursorAdapter {
 	DatabaseHandler mDatabaseHandler;
 	Cursor mCursor;
 	ListView mListView;
+	
 
 	
 	public CustomCursorAdapter(Context context, Cursor c, int flags, ListView listView) {
@@ -32,6 +35,7 @@ public class CustomCursorAdapter extends CursorAdapter {
 		this.mContext = context;
 		this.mCursor = c;
 		this.mListView = listView;
+		//mListView.setOnFocusChangeListener(this);
 	}
 
 	@Override
@@ -43,6 +47,7 @@ public class CustomCursorAdapter extends CursorAdapter {
 			mViewHolderItem = new ViewHolderItem();
 			mViewHolderItem.mHorizontalScrollView = (HorizontalScrollView) convertView.findViewById(R.id.horizontalScrollView1);
 			mViewHolderItem.mLinearLayout = (LinearLayout) convertView.findViewById(R.id.scrollViewLinearLyt);
+			//mViewHolderItem.mLinearLayout.setOnFocusChangeListener(this);
 			mViewHolderItem.mButton = (Button) convertView.findViewById(R.id.button1);
 			mViewHolderItem.mButton.setOnClickListener(new OnClickListener() {
 				
@@ -53,6 +58,7 @@ public class CustomCursorAdapter extends CursorAdapter {
 			});
 			convertView.setTag(mViewHolderItem);
 			initScrollViewData(cursor); 
+			convertView.setOnFocusChangeListener(this);
 		}
 
 	}
@@ -101,14 +107,25 @@ public class CustomCursorAdapter extends CursorAdapter {
 			}
 		}
 	}
-
+	
+	EditText mSelectedEditText = null;
+	
 	private EditText getCustomEditText(int columnIndex ){
-		EditText editText = new EditText( mContext );
+		final EditText editText = new EditText( mContext );
 		editText.setHorizontalScrollBarEnabled(true);
 		editText.setLayoutParams(new LinearLayout.LayoutParams(LinearLayout.LayoutParams.WRAP_CONTENT, LinearLayout.LayoutParams.WRAP_CONTENT));
 		if( columnIndex == 0 ) {
 			editText.setEnabled(false);
 		}
+		editText.setOnClickListener(new OnClickListener() {
+			@Override
+			public void onClick(View v) {
+				mSelectedEditText = editText;
+				//editText.requestFocus();
+			}
+		});
+		editText.setOnFocusChangeListener(this);
+		editText.setLongClickable(true);
 		return editText;
 	}
 
@@ -124,5 +141,40 @@ public class CustomCursorAdapter extends CursorAdapter {
 		HorizontalScrollView mHorizontalScrollView;
 		Button mButton;
 	}
+
+	private int mLastFocussedPosition = -1;
+	private Handler mHandler = new Handler();
+	
+	@Override
+	public void onFocusChange(View v, boolean hasFocus) {
+		if( mSelectedEditText != null && mSelectedEditText.hasFocus() ) {
+			return;
+		}
+		if( hasFocus == true ) {
+			final int position = v.getId();
+			mHandler.postDelayed(new Runnable(){
+
+				@Override
+				public void run() {
+					 if (mLastFocussedPosition == -1 || mLastFocussedPosition == position) {
+                         mLastFocussedPosition = position;
+                         if( mSelectedEditText != null ) {
+                        	 mSelectedEditText.requestFocus();	
+                        	 mSelectedEditText = null;
+                         }
+                         
+                     }
+					
+				}
+				
+			}, 200);
+		}
+		else {
+			mLastFocussedPosition = -1;
+		}
+		
+	}
+	
+	
 
 }
