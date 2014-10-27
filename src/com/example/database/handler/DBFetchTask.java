@@ -13,11 +13,11 @@ public class DBFetchTask extends AsyncTask<Void, Void, Void>{
 	DatabaseHandler mDatabaseHandler;
 	Cursor mCursor;
 	ProgressDialog mProgressDialog;
-	MainActivity mActivity;
+	DBFetchTaskResultListener mDbFetchTaskResultListener;
 	
 	public DBFetchTask( MainActivity activity, DatabaseHandler databaseHandler ) {
 		this.mContext = activity;
-		this.mActivity = activity;
+		this.mDbFetchTaskResultListener = (DBFetchTaskResultListener) activity;
 		this.mProgressDialog = new ProgressDialog(mContext);
 		this.mDatabaseHandler = databaseHandler;
 	}
@@ -33,7 +33,7 @@ public class DBFetchTask extends AsyncTask<Void, Void, Void>{
 		if( mProgressDialog.isShowing() ) {
 			mProgressDialog.dismiss();
 		}
-		mActivity.onAsyncTaskResult(mCursor);
+		mDbFetchTaskResultListener.onAsyncTaskResult(mCursor);
 	}
 	
 	@Override
@@ -42,7 +42,6 @@ public class DBFetchTask extends AsyncTask<Void, Void, Void>{
 		if( mDatabaseHandler == null ) {
 			mDatabaseHandler = new DatabaseHandler(mContext);
 		}
-		
 		mCursor = mDatabaseHandler.getAllDBTableCursor();
 		return null;
 	}

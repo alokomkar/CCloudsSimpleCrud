@@ -14,9 +14,10 @@ import android.widget.Button;
 import android.widget.ListView;
 
 import com.example.database.handler.DBFetchTask;
+import com.example.database.handler.DBFetchTaskResultListener;
 import com.example.database.handler.DatabaseHandler;
 
-public class MainActivity extends Activity {
+public class MainActivity extends Activity implements DBFetchTaskResultListener {
 
 	ListView mListView;
 	CustomCursorAdapter mCustomCursorAdapter;
@@ -38,16 +39,13 @@ public class MainActivity extends Activity {
 		mListView = (ListView) findViewById(R.id.customListView);
 		mListView.setItemsCanFocus(true);
 		mListView.setLongClickable(true);
-		//mListView.setOnLongClickListener(mListViewLongClickListener);
-
+		
 		mListView.setOnItemLongClickListener(mListViewItemLongClickListener);
 		mDatabaseHandler = new DatabaseHandler(this);
 
 		mInvokeMode = KEY_DISPLAY;
 
 		executeDBFetchTask();
-
-
 
 		Button createButton = (Button) findViewById(R.id.createBtn);
 		Button updateButton = (Button) findViewById(R.id.updateBtn1);
@@ -164,10 +162,10 @@ public class MainActivity extends Activity {
 	}
 
 	public void refreshAction() {
-
 		initializeListView();
 	}
 
+	@Override
 	public void onAsyncTaskResult(Cursor cursor) {
 		mCursor = cursor;
 		switch( mInvokeMode ) {
